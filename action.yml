@@ -71,6 +71,14 @@ inputs:
     description: "Enable plan storage. Default: 'true'. Set to 'false' to disable plan storage."
     required: false
     default: 'true'
+  install-atmos:
+    description: "Whether to install atmos. Set to 'false' if atmos is already available on the runner."
+    required: false
+    default: 'true'
+  install-terraform:
+    description: "Whether to install terraform/opentofu via aqua. Set to 'false' if terraform is already available on the runner."
+    required: false
+    default: 'true'
 outputs:
   summary:
     description: "Summary"
@@ -97,6 +105,7 @@ runs:
         echo "ATMOS_CLI_CONFIG_PATH=$(realpath ${{ inputs.atmos-config-path }})" >> $GITHUB_ENV
 
     - name: Install Atmos
+      if: ${{ inputs.install-atmos != 'false' }}
       uses: cloudposse/github-action-setup-atmos@v2
       with:
         atmos-version: ${{ inputs.atmos-version }}
@@ -216,22 +225,27 @@ runs:
           - name: suzuki-shunsuke/tfcmt@v4.14.5
         EOF
 
-        # Add Terraform if specified
-        if [[ "${{ fromJson(steps.atmos-settings.outputs.settings).terraform-version }}" != "" && "${{ fromJson(steps.atmos-settings.outputs.settings).terraform-version }}" != "null" ]]; then
-          VERSION="${{ fromJson(steps.atmos-settings.outputs.settings).terraform-version }}"
-          if [[ ! "$VERSION" =~ ^v ]]; then
-            VERSION="v$VERSION"
+        # Skip terraform/opentofu install if already available on the runner
+        if [[ "${{ inputs.install-terraform }}" == "false" ]]; then
+          echo "Skipping terraform/opentofu install (install-terraform: false)"
+        else
+          # Add Terraform if specified
+          if [[ "${{ fromJson(steps.atmos-settings.outputs.settings).terraform-version }}" != "" && "${{ fromJson(steps.atmos-settings.outputs.settings).terraform-version }}" != "null" ]]; then
+            VERSION="${{ fromJson(steps.atmos-settings.outputs.settings).terraform-version }}"
+            if [[ ! "$VERSION" =~ ^v ]]; then
+              VERSION="v$VERSION"
+            fi
+            echo "  - name: hashicorp/terraform@$VERSION" >> aqua.yaml
           fi
-          echo "  - name: hashicorp/terraform@$VERSION" >> aqua.yaml
-        fi
 
-        # Add OpenTofu if specified
-        if [[ "${{ fromJson(steps.atmos-settings.outputs.settings).opentofu-version }}" != "" && "${{ fromJson(steps.atmos-settings.outputs.settings).opentofu-version }}" != "null" ]]; then
-          VERSION="${{ fromJson(steps.atmos-settings.outputs.settings).opentofu-version }}"
-          if [[ ! "$VERSION" =~ ^v ]]; then
-            VERSION="v$VERSION"
+          # Add OpenTofu if specified
+          if [[ "${{ fromJson(steps.atmos-settings.outputs.settings).opentofu-version }}" != "" && "${{ fromJson(steps.atmos-settings.outputs.settings).opentofu-version }}" != "null" ]]; then
+            VERSION="${{ fromJson(steps.atmos-settings.outputs.settings).opentofu-version }}"
+            if [[ ! "$VERSION" =~ ^v ]]; then
+              VERSION="v$VERSION"
+            fi
+            echo "  - name: opentofu/opentofu@$VERSION" >> aqua.yaml
           fi
-          echo "  - name: opentofu/opentofu@$VERSION" >> aqua.yaml
         fi
 
         # Debug output if debug is enabled
@@ -325,6 +339,7 @@ runs:
         key: ${{ steps.vars.outputs.cache-key }}
 
     - name: Install Terraform
+      if: ${{ inputs.install-terraform != 'false' }}
       uses: cloudposse/github-action-terraform-install@v1
       with:
         terraform-version: ${{ fromJson(steps.atmos-settings.outputs.settings).terraform-version }}
