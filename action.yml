@@ -397,11 +397,10 @@ runs:
 
     - name: Install Terraform
       if: ${{ inputs.install-terraform != 'false' }}
-      uses: cloudposse/github-action-terraform-install@v1
+      uses: hashicorp/setup-terraform@v3
       with:
-        terraform-version: ${{ fromJson(steps.atmos-settings.outputs.settings).terraform-version }}
-        token: ${{ inputs.token }}
-        install-wrapper: false
+        terraform_version: ${{ fromJson(steps.atmos-settings.outputs.settings).terraform-version }}
+        terraform_wrapper: false
 
     - name: Atmos Terraform Plan
       if: ${{ fromJson(steps.atmos-settings.outputs.settings).github-actions-enabled || fromJson(steps.atmos-settings.outputs.settings).atmos-pro-enabled }}
