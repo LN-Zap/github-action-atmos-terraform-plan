@@ -223,6 +223,20 @@ integrations:
             atmos-version: 1.217.0
 ```
 
+### Destroy plan mode
+
+Use `plan-mode: "destroy"` to run `atmos terraform plan -destroy` while keeping the same TFCMT comment flow and action outputs.
+
+```yaml
+  - name: Plan destroy Atmos Component
+    uses: cloudposse/github-action-atmos-terraform-plan@v2
+    with:
+      component: "foobar"
+      stack: "plat-ue2-sandbox"
+      atmos-config-path: ./rootfs/usr/local/etc/atmos/
+      plan-mode: "destroy"
+```
+
 ### Migrating from `v4` to `v5`
 
 The notable changes in `v5` are:
