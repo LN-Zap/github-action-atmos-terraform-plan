@@ -171,7 +171,7 @@ templates:
     {{- end }}
 terraform:
   plan:
-    disable_label: false
+    disable_label: true
     template: |
       {{- template "summary_plan_title" .}}
       {{- template "comment_marker" .}}
